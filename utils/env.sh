@@ -53,6 +53,15 @@ function loadEnvConfig () {
         ;;
     esac
 
+    WARDEN_ENV_CDE=""
+    if [[ ${CODESPACES} ]]; then
+        WARDEN_ENV_CDE="codespaces"
+    fi
+
+    if [[ ${GITPOD} ]]; then
+        WARDEN_ENV_CDE="gitpod"
+    fi
+
     assertValidEnvType
 }
 
@@ -119,19 +128,25 @@ function appendEnvPartialIfExists () {
     local PARTIAL_PATH=""
 
     for PARTIAL_PATH in \
-        "${WARDEN_DIR}/environments/includes/${PARTIAL_NAME}.base.yml" \
-        "${WARDEN_DIR}/environments/includes/${PARTIAL_NAME}.${WARDEN_ENV_SUBT}.yml" \
-        "${WARDEN_DIR}/environments/${WARDEN_ENV_TYPE}/${PARTIAL_NAME}.base.yml" \
-        "${WARDEN_DIR}/environments/${WARDEN_ENV_TYPE}/${PARTIAL_NAME}.${WARDEN_ENV_SUBT}.yml" \
-        "${WARDEN_HOME_DIR}/environments/includes/${PARTIAL_NAME}.base.yml" \
-        "${WARDEN_HOME_DIR}/environments/includes/${PARTIAL_NAME}.${WARDEN_ENV_SUBT}.yml" \
-        "${WARDEN_HOME_DIR}/environments/${WARDEN_ENV_TYPE}/${PARTIAL_NAME}.base.yml" \
-        "${WARDEN_HOME_DIR}/environments/${WARDEN_ENV_TYPE}/${PARTIAL_NAME}.${WARDEN_ENV_SUBT}.yml" \
-        "${WARDEN_ENV_PATH}/.warden/environments/includes/${PARTIAL_NAME}.base.yml" \
-        "${WARDEN_ENV_PATH}/.warden/environments/includes/${PARTIAL_NAME}.${WARDEN_ENV_SUBT}.yml" \
-        "${WARDEN_ENV_PATH}/.warden/environments/${WARDEN_ENV_TYPE}/${PARTIAL_NAME}.base.yml" \
-        "${WARDEN_ENV_PATH}/.warden/environments/${WARDEN_ENV_TYPE}/${PARTIAL_NAME}.${WARDEN_ENV_SUBT}.yml"
+        "${WARDEN_DIR}/environments/includes/${PARTIAL_NAME}.base" \
+        "${WARDEN_DIR}/environments/includes/${PARTIAL_NAME}.${WARDEN_ENV_SUBT}" \
+        "${WARDEN_DIR}/environments/${WARDEN_ENV_TYPE}/${PARTIAL_NAME}.base" \
+        "${WARDEN_DIR}/environments/${WARDEN_ENV_TYPE}/${PARTIAL_NAME}.${WARDEN_ENV_SUBT}" \
+        "${WARDEN_HOME_DIR}/environments/includes/${PARTIAL_NAME}.base" \
+        "${WARDEN_HOME_DIR}/environments/includes/${PARTIAL_NAME}.${WARDEN_ENV_SUBT}" \
+        "${WARDEN_HOME_DIR}/environments/${WARDEN_ENV_TYPE}/${PARTIAL_NAME}.base" \
+        "${WARDEN_HOME_DIR}/environments/${WARDEN_ENV_TYPE}/${PARTIAL_NAME}.${WARDEN_ENV_SUBT}" \
+        "${WARDEN_ENV_PATH}/.warden/environments/includes/${PARTIAL_NAME}.base" \
+        "${WARDEN_ENV_PATH}/.warden/environments/includes/${PARTIAL_NAME}.${WARDEN_ENV_SUBT}" \
+        "${WARDEN_ENV_PATH}/.warden/environments/${WARDEN_ENV_TYPE}/${PARTIAL_NAME}.base" \
+        "${WARDEN_ENV_PATH}/.warden/environments/${WARDEN_ENV_TYPE}/${PARTIAL_NAME}.${WARDEN_ENV_SUBT}"
     do
+        if [[ ${WARDEN_ENV_CDE} ]]; then
+            PARTIAL_PATH="${PARTIAL_PATH}.${WARDEN_ENV_CDE}.yml"
+        else
+            PARTIAL_PATH="${PARTIAL_PATH}.yml"
+        fi
+
         if [[ -f "${PARTIAL_PATH}" ]]; then
             DOCKER_COMPOSE_ARGS+=("-f" "${PARTIAL_PATH}")
         fi

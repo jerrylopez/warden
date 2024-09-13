@@ -1,6 +1,11 @@
 #!/usr/bin/env bash
 [[ ! ${WARDEN_DIR} ]] && >&2 echo -e "\033[31mThis script is not intended to be run directly!\033[0m" && exit 1
 
+if [[ -z "$WARDEN_ENV_CDE" ]]; then
+  echo -e "\033[33mCertificate signing is disabled in cloud development environments."
+  exit
+fi
+
 mkdir -p "${WARDEN_SSL_DIR}/certs"
 
 if [[ ! -f "${WARDEN_SSL_DIR}/rootca/certs/ca.cert.pem" ]]; then
@@ -49,7 +54,7 @@ openssl x509 -req -days 365 -sha256 -extensions v3_req            \
   -CAkey "${WARDEN_SSL_DIR}/rootca/private/ca.key.pem"            \
   -CAserial "${WARDEN_SSL_DIR}/rootca/serial"                     \
   -in "${WARDEN_SSL_DIR}/certs/${CERTIFICATE_NAME}.csr.pem"       \
-  -out "${WARDEN_SSL_DIR}/certs/${CERTIFICATE_NAME}.crt.pem" 
+  -out "${WARDEN_SSL_DIR}/certs/${CERTIFICATE_NAME}.crt.pem"
 
 if [[ "$(cd "${WARDEN_HOME_DIR}" && ${DOCKER_COMPOSE_COMMAND} -p warden -f "${WARDEN_DIR}/docker/docker-compose.yml" ps -q traefik)" ]]
 then

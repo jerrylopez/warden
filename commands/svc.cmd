@@ -16,7 +16,7 @@ trap '' ERR
 DOCKER_COMPOSE_ARGS=()
 
 DOCKER_COMPOSE_ARGS+=("-f")
-DOCKER_COMPOSE_ARGS+=("${WARDEN_DIR}/docker/docker-compose.yml")
+DOCKER_COMPOSE_ARGS+=("${WARDEN_DIR}/docker/docker-compose.yml" "${WARDEN_DIR}/docker/docker-compose.tunnel.yml")
 
 if [[ -f "${WARDEN_HOME_DIR}/.env" ]]; then
     # Check DNSMasq
@@ -28,23 +28,42 @@ fi
 DOCKER_COMPOSE_ARGS+=("-f")
 DOCKER_COMPOSE_ARGS+=("${WARDEN_DIR}/docker/docker-compose.mailpit.yml")
 
+## add traefik docker compose
+WARDEN_TRAEFIK_ENABLE="${WARDEN_TRAEFIK_ENABLE:-1}"
+if [[ "WARDEN_TRAEFIK_ENABLE" == "1" ]] && [[ -z "$WARDEN_ENV_CDE" ]]; then
+    DOCKER_COMPOSE_ARGS+=("-f")
+    DOCKER_COMPOSE_ARGS+=("${WARDEN_DIR}/docker/docker-compose.traefik.yml")
+fi
+
 ## add dnsmasq docker-compose
 WARDEN_DNSMASQ_ENABLE="${WARDEN_DNSMASQ_ENABLE:-1}"
-if [[ "$WARDEN_DNSMASQ_ENABLE" == "1" ]]; then
+if [[ "$WARDEN_DNSMASQ_ENABLE" == "1" ]] && [[ -z "$WARDEN_ENV_CDE" ]]; then
     DOCKER_COMPOSE_ARGS+=("-f")
     DOCKER_COMPOSE_ARGS+=("${WARDEN_DIR}/docker/docker-compose.dnsmasq.yml")
 fi
 
 WARDEN_PORTAINER_ENABLE="${WARDEN_PORTAINER_ENABLE:-0}"
 if [[ "${WARDEN_PORTAINER_ENABLE}" == 1 ]]; then
+    PORTAINER_PATH="${WARDEN_DIR}/docker/docker-compose.portainer.yml"
+
+    if [[ "$WARDEN_ENV_CDE" ]]; then
+        PORTAINER_PATH="${WARDEN_DIR}/docker/docker-compose.portainer.${WARDEN_ENV_CDE}.yml"
+    fi
+
     DOCKER_COMPOSE_ARGS+=("-f")
-    DOCKER_COMPOSE_ARGS+=("${WARDEN_DIR}/docker/docker-compose.portainer.yml")
+    DOCKER_COMPOSE_ARGS+=("${PORTAINER_PATH}")
 fi
 
 ## allow an additional docker-compose file to be loaded for global services
 if [[ -f "${WARDEN_HOME_DIR}/docker-compose.yml" ]]; then
+    ADDITIONAL_PATH="${WARDEN_HOME_DIR}/docker-compose.yml"
+
+    if [[ "$WARDEN_ENV_CDE" ]]; then
+        ADDITIONAL_PATH="${WARDEN_DIR}/docker-compose.${WARDEN_ENV_CDE}.yml"
+    fi
+
     DOCKER_COMPOSE_ARGS+=("-f")
-    DOCKER_COMPOSE_ARGS+=("${WARDEN_HOME_DIR}/docker-compose.yml")
+    DOCKER_COMPOSE_ARGS+=("${ADDITIONAL_PATH}")
 fi
 
 ## special handling when 'svc up' is run

@@ -170,14 +170,16 @@ if [[ "${WARDEN_PARAMS[0]}" == "up" ]]; then
     fi
 fi
 
-## lookup address of traefik container on environment network
-TRAEFIK_ADDRESS="$(docker container inspect traefik \
-    --format '
-        {{- $network := index .NetworkSettings.Networks "'"$(renderEnvNetworkName)"'" -}}
-        {{- if $network }}{{ $network.IPAddress }}{{ end -}}
-    ' 2>/dev/null || true
-)"
-export TRAEFIK_ADDRESS;
+if [[ -z "$WARDEN_ENV_CDE" ]]; then
+    ## lookup address of traefik container on environment network
+    TRAEFIK_ADDRESS="$(docker container inspect traefik \
+        --format '
+            {{- $network := index .NetworkSettings.Networks "'"$(renderEnvNetworkName)"'" -}}
+            {{- if $network }}{{ $network.IPAddress }}{{ end -}}
+        ' 2>/dev/null || true
+    )"
+    export TRAEFIK_ADDRESS;
+fi
 
 if [[ $OSTYPE =~ ^darwin ]]; then
     export MUTAGEN_SYNC_FILE="${WARDEN_DIR}/environments/${WARDEN_ENV_TYPE}/${WARDEN_ENV_TYPE}.mutagen.yml"
